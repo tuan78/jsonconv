@@ -5,35 +5,38 @@ import (
 	"sort"
 )
 
-type ConvertInput struct {
-	JsonArray    JsonArray
-	FlattenLevel int // -1: unlimited, 0: no nested, [1...n]: n level
-	BaseHeaders  CsvRow
+// A ToCsvOption converts a JSON Array to CSV data.
+type ToCsvOption struct {
+	FlattenOption *FlattenOption // Set it to apply JSON flattening
+	BaseHeaders   CsvRow         // Base CSV headers used to add before dynamic headers
 }
 
-func Convert(input *ConvertInput) (CsvData, error) {
-	csvData := make(CsvData, 0)
-	if len(input.JsonArray) == 0 {
-		return nil, fmt.Errorf("empty JSON array")
+// ToCsv converts a JsonArray to CsvData with given op.
+func ToCsv(arr JsonArray, op *ToCsvOption) CsvData {
+	if len(arr) == 0 {
+		return CsvData{}
 	}
 
-	// Flatten JSON object, so can display nested JSON values in CSV columns.
-	for _, jsonObject := range input.JsonArray {
-		FlattenJsonObject(jsonObject, input.FlattenLevel)
-	}
-
-	// Create CSV headers.
-	headers := CreateCsvHeader(input.JsonArray, input.BaseHeaders)
-	if len(headers) == 0 {
-		return nil, fmt.Errorf("empty CSV headers")
+	// Flatten JSON.
+	if op != nil && op.FlattenOption != nil {
+		for _, obj := range arr {
+			FlattenJsonObject(obj, op.FlattenOption)
+		}
 	}
 
 	// Create CSV rows.
-	csvData = append(csvData, headers)
-	for _, jsonObj := range input.JsonArray {
+	var csvData CsvData
+	var hs []string
+	if op != nil && len(op.BaseHeaders) > 0 {
+		hs = CreateCsvHeader(arr, op.BaseHeaders)
+	} else {
+		hs = CreateCsvHeader(arr, nil)
+	}
+	csvData = append(csvData, hs)
+	for _, obj := range arr {
 		row := make(CsvRow, 0)
-		for _, header := range headers {
-			if val, exist := jsonObj[header]; exist {
+		for _, h := range hs {
+			if val, exist := obj[h]; exist {
 				row = append(row, fmt.Sprintf("%v", val))
 				continue
 			}
@@ -42,33 +45,35 @@ func Convert(input *ConvertInput) (CsvData, error) {
 		csvData = append(csvData, row)
 	}
 
-	return csvData, nil
+	return csvData
 }
 
-func CreateCsvHeader(jsonArray JsonArray, baseHeaders CsvRow) CsvRow {
-	headers := make(sort.StringSlice, 0)
-	headerSet := make(map[string]struct{})
+// CreateCsvHeader creates CsvRow from arr and baseHs.
+// A baseHs is base header that we want to put at the beginning of dynamic header,
+// we can set baseHs to nil if we just want to have dynamic header only.
+func CreateCsvHeader(arr JsonArray, baseHs CsvRow) CsvRow {
+	hs := make(sort.StringSlice, 0)
+	hss := make(map[string]struct{})
 
 	// Get CSV header from json.
-	for _, jsonObj := range jsonArray {
-		for key := range jsonObj {
-			headerSet[key] = struct{}{}
+	for _, obj := range arr {
+		for k := range obj {
+			hss[k] = struct{}{}
 		}
 	}
 
 	// Exclude base headers from detected headers, then sort filtered list.
-	for _, header := range baseHeaders {
-		delete(headerSet, header)
+	for _, h := range baseHs {
+		delete(hss, h)
 	}
-	for header := range headerSet {
-		headers = append(headers, header)
+	for h := range hss {
+		hs = append(hs, h)
 	}
-	headers.Sort()
+	hs.Sort()
 
 	// Insert BaseHeaders to the beginning of headers.
-	if len(baseHeaders) > 0 {
-		headers = append(baseHeaders, headers...)
+	if len(baseHs) > 0 {
+		hs = append(baseHs, hs...)
 	}
-
-	return headers
+	return hs
 }

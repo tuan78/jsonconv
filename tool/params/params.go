@@ -1,8 +1,7 @@
 package params
 
 var (
-	InputPath    string
-	OutputPath   string
-	RawData      string
-	FlattenLevel int
+	InputPath  string
+	OutputPath string
+	RawData    string
 )

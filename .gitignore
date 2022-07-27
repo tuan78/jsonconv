@@ -20,4 +20,5 @@
 
 # Project's unused files
 bin/
-output-*
+*.csv
+*.json

@@ -13,7 +13,7 @@ import (
 )
 
 var (
-	version = "v1.0.0"
+	version = "v0.1.0"
 )
 
 var (
@@ -30,7 +30,6 @@ func main() {
 	rootCmd.PersistentFlags().StringVarP(&params.RawData, "data", "d", "", "raw JSON array data")
 	rootCmd.PersistentFlags().StringVarP(&params.InputPath, "in", "i", "", "input file path")
 	rootCmd.PersistentFlags().StringVarP(&params.OutputPath, "out", "o", "", "output file path")
-	rootCmd.PersistentFlags().IntVarP(&params.FlattenLevel, "level", "l", -1, "level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
 
 	// Add commands.
 	rootCmd.AddCommand(cmd.NewFlattenCmd())

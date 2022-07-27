@@ -3,41 +3,23 @@ package jsonconv
 import (
 	"encoding/json"
 	"io"
-	"os"
-	"strings"
 )
 
+// A JsonReader reads and decodes JSON values from an input stream.
 type JsonReader struct {
 	reader io.Reader
-	closer io.Closer
 }
 
-func NewJsonReaderFromFile(path string) (*JsonReader, error) {
-	fi, err := os.Open(path)
-	if err != nil {
-		return nil, err
-	}
-	re := NewJsonReader(fi)
-	re.closer = fi
-	return re, nil
-}
-
-func NewJsonReaderFromString(rawData string) *JsonReader {
-	re := strings.NewReader(rawData)
-	return NewJsonReader(re)
-}
-
+// NewJsonReader returns a new JsonReader that reads from r.
 func NewJsonReader(r io.Reader) *JsonReader {
 	return &JsonReader{
 		reader: r,
 	}
 }
 
+// Read reads the next JSON-encoded value from its
+// input and stores it in the value pointed to by v.
 func (r *JsonReader) Read(v any) error {
-	if r.closer != nil {
-		defer r.closer.Close()
-	}
-
 	decoder := json.NewDecoder(r.reader)
 	for decoder.More() {
 		err := decoder.Decode(v)
