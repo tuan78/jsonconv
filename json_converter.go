@@ -7,8 +7,11 @@ import (
 
 // A ToCsvOption converts a JSON Array to CSV data.
 type ToCsvOption struct {
-	FlattenOption *FlattenOption // Set it to apply JSON flattening
-	BaseHeaders   CsvRow         // Base CSV headers used to add before dynamic headers
+	// Set it to apply JSON flattening
+	FlattenOption *FlattenOption
+
+	// Base CSV headers used to add before dynamic headers
+	BaseHeaders CsvRow
 }
 
 // ToCsv converts a JsonArray to CsvData with given op.

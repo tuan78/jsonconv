@@ -7,8 +7,13 @@ import (
 
 // A JsonWriter writes JSON values to an output stream.
 type JsonWriter struct {
+	// EscapeHTML specifies whether problematic HTML characters
+	// should be escaped inside JSON quoted strings.
+	// The default behavior is to escape &, <, and > to \u0026, \u003c, and \u003e
+	// to avoid certain safety problems that can arise when embedding JSON in HTML.
 	EscapeHTML bool
-	writer     io.Writer
+
+	writer io.Writer
 }
 
 // NewJsonWriter returns a new JsonWriter that writes to w.

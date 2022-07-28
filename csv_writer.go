@@ -7,9 +7,13 @@ import (
 
 // A CsvWriter writes records using CSV encoding.
 type CsvWriter struct {
-	Delimiter *rune // Field delimiter. If nil, it uses default value from csv.NewWriter
-	UseCRLF   bool  // True to use \r\n as the line terminator
-	writer    io.Writer
+	// Field delimiter. If nil, it uses default value from csv.NewWriter
+	Delimiter *rune
+
+	// True to use \r\n as the line terminator
+	UseCRLF bool
+
+	writer io.Writer
 }
 
 // NewCsvWriter returns a new CsvWriter that writes to w.
