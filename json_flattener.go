@@ -6,20 +6,53 @@ import (
 )
 
 const (
-	FlattenLevelUnlimited = -1 // Set it to FlattenOption.Level for unlimited flattening
-	FlattenLevelNonNested = 0  // Set it to FlattenOption.Level for non-nested flattening (equivalent to non-flattening)
+	// Set it to FlattenOption.Level for unlimited flattening.
+	FlattenLevelUnlimited = -1
+
+	// Set it to FlattenOption.Level for non-nested flattening
+	// (equivalent to non-flattening).
+	FlattenLevelNonNested = 0
+
+	// Set it to FlattenOption.Level for default level flattening
+	// (equivalent to FlattenLevelUnlimited).
+	FlattenLevelDefault = FlattenLevelUnlimited
 )
+
+// Set it to FlattenOption.Gap for default gap flattening.
+const FlattenGapDefault = "__"
 
 // A FlattenOption is for JSON object flattening.
 type FlattenOption struct {
-	Level     int    // Level of flattening, it can be FlattenLevelUnlimited, FlattenLevelNonNested or an int value in [1..n]
-	Gap       string // A gap between nested JSON and its parent JSON. It will be used when merging nested JSON's key with parent JSON's key
-	SkipMap   bool   // Skip Map type (typically JSON Object type) from flattening process
-	SkipArray bool   // Skip Array type (JSON array, string array, int array, float array, etc.) from flattening process
+	// Level of flattening, it can be FlattenLevelUnlimited,
+	// FlattenLevelNonNested or an int value in [1..n]
+	Level int
+
+	// A gap between nested JSON and its parent JSON.
+	// It will be used when merging nested JSON's key with parent JSON's key
+	Gap string
+
+	// Skip Map type (typically JSON Object type) from flattening process
+	SkipMap bool
+
+	// Skip Array type (JSON array, string array, int array, float array, etc.)
+	// from flattening process
+	SkipArray bool
 }
 
-// FlattenJsonObject flattens obj with given op.
+func DefaultFlattenOption() *FlattenOption {
+	return &FlattenOption{
+		Level: FlattenLevelDefault,
+		Gap:   FlattenGapDefault,
+	}
+}
+
+// FlattenJsonObject flattens obj with given op. If op is nil,
+// it will use op value from DefaultFlattenOption instead.
 func FlattenJsonObject(obj JsonObject, op *FlattenOption) {
+	if op == nil {
+		op = DefaultFlattenOption()
+	}
+
 	kset := make(map[string]struct{})
 	ks := make([]string, 0)
 	for k := range obj {
@@ -67,6 +100,8 @@ func extractJsonObject(k string, refval *reflect.Value, obj JsonObject, kset map
 			newK := fmt.Sprintf("%s[%v]", k, i)
 			extractJsonObject(newK, &nv, obj, kset, op, curLvl+1)
 		}
+	case reflect.Invalid:
+		obj[k] = nil
 	default:
 		obj[k] = refval.Interface()
 	}

@@ -55,8 +55,8 @@ func NewCsvCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&delim, "delim", ",", "field delimiter")
 	cmd.PersistentFlags().BoolVar(&crlf, "crlf", false, "set it true to use \\r\\n as the line terminator")
 	cmd.PersistentFlags().BoolVar(&noft, "noft", false, "set it true to skip JSON flattening")
-	cmd.PersistentFlags().IntVar(&flv, "flv", jsonconv.FlattenLevelUnlimited, "flatten level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
-	cmd.PersistentFlags().StringVar(&fga, "fga", "__", "flatten gap for separating JSON object with its nested data")
+	cmd.PersistentFlags().IntVar(&flv, "flv", jsonconv.FlattenLevelDefault, "flatten level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
+	cmd.PersistentFlags().StringVar(&fga, "fga", jsonconv.FlattenGapDefault, "flatten gap for separating JSON object with its nested data")
 	cmd.PersistentFlags().BoolVar(&fsm, "fsm", false, "flatten but skip map type")
 	cmd.PersistentFlags().BoolVar(&fsa, "fsa", false, "flatten but skip array type")
 	return cmd

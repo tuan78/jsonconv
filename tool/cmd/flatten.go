@@ -41,8 +41,8 @@ func NewFlattenCmd() *cobra.Command {
 		},
 	}
 
-	cmd.PersistentFlags().IntVar(&lvl, "lv", jsonconv.FlattenLevelUnlimited, "level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
-	cmd.PersistentFlags().StringVar(&gap, "ga", "__", "gap for separating JSON object with its nested data")
+	cmd.PersistentFlags().IntVar(&lvl, "lv", jsonconv.FlattenLevelDefault, "level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
+	cmd.PersistentFlags().StringVar(&gap, "ga", jsonconv.FlattenGapDefault, "gap for separating JSON object with its nested data")
 	cmd.PersistentFlags().BoolVar(&sm, "sm", false, "skip map type")
 	cmd.PersistentFlags().BoolVar(&sa, "sa", false, "skip array type")
 	return cmd
