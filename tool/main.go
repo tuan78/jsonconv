@@ -13,14 +13,14 @@ import (
 )
 
 var (
-	version = "v0.1.1"
+	version = "v0.2.0"
 )
 
 var (
 	rootCmd = &cobra.Command{
 		Use:     "jsonconv",
-		Short:   "Tool for flattening and converting JSON.",
-		Long:    "Tool for flattening and converting JSON (JSON to CSV, JSON from CSV, JSON from Excel, and more).",
+		Short:   "Tool for flattening JSON and converting JSON to CSV",
+		Long:    "Tool for flattening JSON and converting JSON to CSV",
 		Version: version,
 	}
 )

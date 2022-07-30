@@ -9,8 +9,9 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tuan78/jsonconv"
+	"github.com/tuan78/jsonconv/tool/logger"
 	"github.com/tuan78/jsonconv/tool/params"
-	"github.com/tuan78/jsonconv/utils"
+	"github.com/tuan78/jsonconv/tool/repository"
 )
 
 func NewFlattenCmd() *cobra.Command {
@@ -30,19 +31,21 @@ func NewFlattenCmd() *cobra.Command {
 				inputPath:  params.InputPath,
 				outputPath: params.OutputPath,
 				raw:        params.RawData,
-				flattenOp: &jsonconv.FlattenOption{
+				flattenOpt: &jsonconv.FlattenOption{
 					Level:     lvl,
 					Gap:       gap,
 					SkipMap:   sm,
 					SkipArray: sa,
 				},
 			}
-			return processFlattenCmd(in)
+			logger := logger.NewCmdLogger(cmd)
+			repo := repository.NewRepository()
+			return processFlattenCmd(logger, repo, in)
 		},
 	}
 
-	cmd.PersistentFlags().IntVar(&lvl, "lv", jsonconv.FlattenLevelDefault, "level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
-	cmd.PersistentFlags().StringVar(&gap, "ga", jsonconv.FlattenGapDefault, "gap for separating JSON object with its nested data")
+	cmd.PersistentFlags().IntVar(&lvl, "lv", jsonconv.DefaultFlattenLevel, "level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
+	cmd.PersistentFlags().StringVar(&gap, "ga", jsonconv.DefaultFlattenGap, "gap for separating JSON object with its nested data")
 	cmd.PersistentFlags().BoolVar(&sm, "sm", false, "skip map type")
 	cmd.PersistentFlags().BoolVar(&sa, "sa", false, "skip array type")
 	return cmd
@@ -52,10 +55,10 @@ type flattenCmdInput struct {
 	inputPath  string
 	outputPath string
 	raw        string
-	flattenOp  *jsonconv.FlattenOption
+	flattenOpt *jsonconv.FlattenOption
 }
 
-func processFlattenCmd(in *flattenCmdInput) error {
+func processFlattenCmd(logger logger.CmdLogger, repo repository.Repository, in *flattenCmdInput) error {
 	var err error
 
 	// Create JSON reader.
@@ -64,14 +67,14 @@ func processFlattenCmd(in *flattenCmdInput) error {
 	case in.raw != "":
 		jr = jsonconv.NewJsonReader(strings.NewReader(in.raw))
 	case in.inputPath != "":
-		fi, err := os.Open(in.inputPath)
+		fi, err := repo.GetFileReadCloser(in.inputPath)
 		if err != nil {
 			return err
 		}
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
-	case !utils.IsStdinEmpty():
-		fi := os.Stdin
+	case !repo.IsStdinEmpty():
+		fi := repo.GetStdinReadCloser()
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
 	default:
@@ -93,27 +96,28 @@ func processFlattenCmd(in *flattenCmdInput) error {
 				arr = append(arr, obj)
 				continue
 			}
-			return fmt.Errorf("unknown type of JSON data")
+			return fmt.Errorf("unsupport type of JSON data")
 		}
+
 		// Flatten JSON array.
 		for _, obj := range arr {
-			jsonconv.FlattenJsonObject(obj, in.flattenOp)
+			jsonconv.FlattenJsonObject(obj, in.flattenOpt)
 		}
 
 		// Output the JSON content.
-		return outputJsonContent(arr, in.outputPath)
+		return outputJsonContent(logger, arr, in.outputPath)
 	case jsonconv.JsonObject:
 		// Flatten JSON object.
-		jsonconv.FlattenJsonObject(val, in.flattenOp)
+		jsonconv.FlattenJsonObject(val, in.flattenOpt)
 
 		// Output the JSON content.
-		return outputJsonContent(val, in.outputPath)
-	default:
-		return fmt.Errorf("unknown type of JSON data")
+		return outputJsonContent(logger, val, in.outputPath)
 	}
+
+	return nil
 }
 
-func outputJsonContent(data interface{}, filePath string) error {
+func outputJsonContent(logger logger.CmdLogger, data interface{}, filePath string) error {
 	var err error
 
 	// Check and override outputPath if necessary.
@@ -128,7 +132,7 @@ func outputJsonContent(data interface{}, filePath string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s\n", buf.String())
+		logger.Printf("%s\n", buf.String())
 	} else {
 		var fi *os.File
 		// Check file path and make dir accordingly.
@@ -167,7 +171,7 @@ func outputJsonContent(data interface{}, filePath string) error {
 		if err != nil {
 			return err
 		}
-		fmt.Printf("The JSON file is located at %s\n", path)
+		logger.Printf("The JSON file is located at %s\n", path)
 	}
 	return nil
 }
