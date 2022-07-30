@@ -7,8 +7,8 @@ import (
 
 // A CsvWriter writes records using CSV encoding.
 type CsvWriter struct {
-	// Field delimiter. If nil, it uses default value from csv.NewWriter
-	Delimiter *rune
+	// Field delimiter. Set to ',' (CsvComma) by default in NewCsvWriter
+	Delimiter rune
 
 	// True to use \r\n as the line terminator
 	UseCRLF bool
@@ -16,24 +16,20 @@ type CsvWriter struct {
 	writer io.Writer
 }
 
+const CsvComma rune = ','
+
 // NewCsvWriter returns a new CsvWriter that writes to w.
 func NewCsvWriter(w io.Writer) *CsvWriter {
 	return &CsvWriter{
-		writer: w,
+		writer:    w,
+		Delimiter: CsvComma,
 	}
-}
-
-// NewDelimiter returns a pointer to v.
-func NewDelimiter(v rune) *rune {
-	return &v
 }
 
 // Write writes all CSV data to w.
 func (w *CsvWriter) Write(data CsvData) error {
 	writer := csv.NewWriter(w.writer)
-	if w.Delimiter != nil {
-		writer.Comma = *w.Delimiter
-	}
+	writer.Comma = w.Delimiter
 	writer.UseCRLF = w.UseCRLF
 
 	defer writer.Flush()

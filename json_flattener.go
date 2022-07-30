@@ -12,14 +12,16 @@ const (
 	// Set it to FlattenOption.Level for non-nested flattening
 	// (equivalent to non-flattening).
 	FlattenLevelNonNested = 0
-
-	// Set it to FlattenOption.Level for default level flattening
-	// (equivalent to FlattenLevelUnlimited).
-	FlattenLevelDefault = FlattenLevelUnlimited
 )
 
-// Set it to FlattenOption.Gap for default gap flattening.
-const FlattenGapDefault = "__"
+const (
+	// Set it to FlattenOption.Level for default level flattening
+	// (equivalent to FlattenLevelUnlimited).
+	DefaultFlattenLevel = FlattenLevelUnlimited
+
+	// Set it to FlattenOption.Gap for default gap flattening.
+	DefaultFlattenGap = "__"
+)
 
 // A FlattenOption is for JSON object flattening.
 type FlattenOption struct {
@@ -39,18 +41,16 @@ type FlattenOption struct {
 	SkipArray bool
 }
 
-func DefaultFlattenOption() *FlattenOption {
-	return &FlattenOption{
-		Level: FlattenLevelDefault,
-		Gap:   FlattenGapDefault,
-	}
+var DefaultFlattenOption = &FlattenOption{
+	Level: DefaultFlattenLevel,
+	Gap:   DefaultFlattenGap,
 }
 
-// FlattenJsonObject flattens obj with given op. If op is nil,
-// it will use op value from DefaultFlattenOption instead.
-func FlattenJsonObject(obj JsonObject, op *FlattenOption) {
-	if op == nil {
-		op = DefaultFlattenOption()
+// FlattenJsonObject flattens obj with given opt. If opt is nil,
+// it will use opt value from DefaultFlattenOption instead.
+func FlattenJsonObject(obj JsonObject, opt *FlattenOption) {
+	if opt == nil {
+		opt = DefaultFlattenOption
 	}
 
 	kset := make(map[string]struct{})
@@ -61,35 +61,35 @@ func FlattenJsonObject(obj JsonObject, op *FlattenOption) {
 	for _, k := range ks {
 		curLvl := 0
 		val := reflect.ValueOf(obj[k])
-		extractJsonObject(k, &val, obj, kset, op, curLvl)
+		extractJsonObject(k, &val, obj, kset, opt, curLvl)
 	}
 	for k := range kset {
 		delete(obj, k)
 	}
 }
 
-// extractJsonObject processes obj extraction with k, refval pairs and given op.
-// When extracting map, slice and array, a new key will be stores in kset and curLvl will be increased.
-func extractJsonObject(k string, refval *reflect.Value, obj JsonObject, kset map[string]struct{}, op *FlattenOption, curLvl int) {
-	more := op.Level == FlattenLevelUnlimited || op.Level > curLvl
+// extractJsonObject processes obj extraction with k, refval pairs and given opt.
+// When extracting map, slice and array, a new key will be stored in kset and curLvl will be increased.
+func extractJsonObject(k string, refval *reflect.Value, obj JsonObject, kset map[string]struct{}, opt *FlattenOption, curLvl int) {
+	more := opt.Level == FlattenLevelUnlimited || opt.Level > curLvl
 	for refval.Kind() == reflect.Interface {
 		*refval = refval.Elem()
 	}
 	switch refval.Kind() {
 	case reflect.Map:
-		if !more || op.SkipMap {
+		if !more || opt.SkipMap {
 			obj[k] = refval.Interface()
 			return
 		}
 		kset[k] = struct{}{}
 		ks := refval.MapKeys()
 		for _, nk := range ks {
-			newK := fmt.Sprintf("%s%s%s", k, op.Gap, nk.String())
+			newK := fmt.Sprintf("%s%s%s", k, opt.Gap, nk.String())
 			nv := refval.MapIndex(nk)
-			extractJsonObject(newK, &nv, obj, kset, op, curLvl+1)
+			extractJsonObject(newK, &nv, obj, kset, opt, curLvl+1)
 		}
 	case reflect.Slice, reflect.Array:
-		if !more || op.SkipArray {
+		if !more || opt.SkipArray {
 			obj[k] = refval.Interface()
 			return
 		}
@@ -98,7 +98,7 @@ func extractJsonObject(k string, refval *reflect.Value, obj JsonObject, kset map
 		for i := 0; i < len; i++ {
 			nv := refval.Index(i)
 			newK := fmt.Sprintf("%s[%v]", k, i)
-			extractJsonObject(newK, &nv, obj, kset, op, curLvl+1)
+			extractJsonObject(newK, &nv, obj, kset, opt, curLvl+1)
 		}
 	case reflect.Invalid:
 		obj[k] = nil
