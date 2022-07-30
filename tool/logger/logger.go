@@ -7,19 +7,21 @@ import (
 )
 
 type (
-	CmdLogger interface {
+	// A Logger prints formatted string to desired outputs (stdout, stdin,
+	// stderr or byte buffer) that can improve the testability.
+	Logger interface {
 		Printf(format string, i ...interface{})
 	}
 
-	cmdLogger struct {
+	logger struct {
 		cmd *cobra.Command
 	}
 )
 
-func NewCmdLogger(cmd *cobra.Command) CmdLogger {
-	return &cmdLogger{cmd: cmd}
+func NewLogger(cmd *cobra.Command) Logger {
+	return &logger{cmd: cmd}
 }
 
-func (l *cmdLogger) Printf(format string, i ...interface{}) {
+func (l *logger) Printf(format string, i ...interface{}) {
 	fmt.Fprintf(l.cmd.OutOrStdout(), format, i...)
 }

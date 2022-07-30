@@ -3,14 +3,11 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tuan78/jsonconv"
 	"github.com/tuan78/jsonconv/tool/logger"
-	"github.com/tuan78/jsonconv/tool/params"
 	"github.com/tuan78/jsonconv/tool/repository"
 )
 
@@ -28,9 +25,9 @@ func NewFlattenCmd() *cobra.Command {
 		Long:  "Flatten JSON object and JSON array",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			in := &flattenCmdInput{
-				inputPath:  params.InputPath,
-				outputPath: params.OutputPath,
-				raw:        params.RawData,
+				inputPath:  rootFlags.InputPath,
+				outputPath: rootFlags.OutputPath,
+				raw:        rootFlags.RawData,
 				flattenOpt: &jsonconv.FlattenOption{
 					Level:     lvl,
 					Gap:       gap,
@@ -38,7 +35,7 @@ func NewFlattenCmd() *cobra.Command {
 					SkipArray: sa,
 				},
 			}
-			logger := logger.NewCmdLogger(cmd)
+			logger := logger.NewLogger(cmd)
 			repo := repository.NewRepository()
 			return processFlattenCmd(logger, repo, in)
 		},
@@ -58,7 +55,7 @@ type flattenCmdInput struct {
 	flattenOpt *jsonconv.FlattenOption
 }
 
-func processFlattenCmd(logger logger.CmdLogger, repo repository.Repository, in *flattenCmdInput) error {
+func processFlattenCmd(logger logger.Logger, repo repository.Repository, in *flattenCmdInput) error {
 	var err error
 
 	// Create JSON reader.
@@ -67,14 +64,14 @@ func processFlattenCmd(logger logger.CmdLogger, repo repository.Repository, in *
 	case in.raw != "":
 		jr = jsonconv.NewJsonReader(strings.NewReader(in.raw))
 	case in.inputPath != "":
-		fi, err := repo.GetFileReadCloser(in.inputPath)
+		fi, err := repo.GetFileReader(in.inputPath)
 		if err != nil {
 			return err
 		}
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
 	case !repo.IsStdinEmpty():
-		fi := repo.GetStdinReadCloser()
+		fi := repo.GetStdinReader()
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
 	default:
@@ -85,9 +82,10 @@ func processFlattenCmd(logger logger.CmdLogger, repo repository.Repository, in *
 	var encoded interface{}
 	err = jr.Read(&encoded)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid JSON data, %v", err)
 	}
 
+	var flattened interface{}
 	switch val := encoded.(type) {
 	case []interface{}:
 		var arr jsonconv.JsonArray
@@ -103,67 +101,38 @@ func processFlattenCmd(logger logger.CmdLogger, repo repository.Repository, in *
 		for _, obj := range arr {
 			jsonconv.FlattenJsonObject(obj, in.flattenOpt)
 		}
-
-		// Output the JSON content.
-		return outputJsonContent(logger, arr, in.outputPath)
+		flattened = arr
+		return outputJsonContent(logger, repo, arr, in.outputPath)
 	case jsonconv.JsonObject:
 		// Flatten JSON object.
 		jsonconv.FlattenJsonObject(val, in.flattenOpt)
-
-		// Output the JSON content.
-		return outputJsonContent(logger, val, in.outputPath)
+		flattened = val
 	}
 
-	return nil
+	// Output the JSON content.
+	return outputJsonContent(logger, repo, flattened, in.outputPath)
 }
 
-func outputJsonContent(logger logger.CmdLogger, data interface{}, filePath string) error {
-	var err error
-
+func outputJsonContent(logger logger.Logger, repo repository.Repository, data interface{}, filePath string) error {
 	// Check and override outputPath if necessary.
-	path := filePath
-	if path == "" {
+	if filePath == "" {
 		// Create JSON writer with byte buffer.
 		buf := &bytes.Buffer{}
 		jw := jsonconv.NewJsonWriter(buf)
 
 		// Write to JSON file.
-		err = jw.Write(data)
+		err := jw.Write(data)
 		if err != nil {
 			return err
 		}
 		logger.Printf("%s\n", buf.String())
 	} else {
-		var fi *os.File
-		// Check file path and make dir accordingly.
-		if strings.Contains(path, string(filepath.Separator)) ||
-			strings.HasPrefix(path, ".") ||
-			strings.HasPrefix(path, "~") {
-			// Ensure all dir in path exists.
-			err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
-			if err != nil {
-				return err
-			}
-			fi, err = os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer fi.Close()
-		} else {
-			// Path is only file name so override it with full path (working dir + file name).
-			dir, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-			path = filepath.Join(dir, filePath)
-			fi, err = os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer fi.Close()
-		}
-
 		// Create JSON writer with output file.
+		fi, err := repo.CreateFileWriter(filePath)
+		if err != nil {
+			return err
+		}
+		defer fi.Close()
 		jw := jsonconv.NewJsonWriter(fi)
 
 		// Write to JSON file.
@@ -171,7 +140,7 @@ func outputJsonContent(logger logger.CmdLogger, data interface{}, filePath strin
 		if err != nil {
 			return err
 		}
-		logger.Printf("The JSON file is located at %s\n", path)
+		logger.Printf("The JSON file is located at %s\n", filePath)
 	}
 	return nil
 }

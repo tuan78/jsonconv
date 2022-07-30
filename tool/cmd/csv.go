@@ -3,14 +3,11 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tuan78/jsonconv"
 	"github.com/tuan78/jsonconv/tool/logger"
-	"github.com/tuan78/jsonconv/tool/params"
 	"github.com/tuan78/jsonconv/tool/repository"
 )
 
@@ -32,9 +29,9 @@ func NewCsvCmd() *cobra.Command {
 		Long:  "Convert JSON to CSV",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			in := &csvCmdInput{
-				inputPath:  params.InputPath,
-				outputPath: params.OutputPath,
-				raw:        params.RawData,
+				inputPath:  rootFlags.InputPath,
+				outputPath: rootFlags.OutputPath,
+				raw:        rootFlags.RawData,
 				baseHs:     baseHs,
 				delim:      delim,
 				useCRLF:    crlf,
@@ -47,7 +44,7 @@ func NewCsvCmd() *cobra.Command {
 					SkipArray: fsa,
 				}
 			}
-			logger := logger.NewCmdLogger(cmd)
+			logger := logger.NewLogger(cmd)
 			repo := repository.NewRepository()
 			return processCsvCmd(logger, repo, in)
 		},
@@ -75,7 +72,7 @@ type csvCmdInput struct {
 	flattenOpt *jsonconv.FlattenOption
 }
 
-func processCsvCmd(logger logger.CmdLogger, repo repository.Repository, in *csvCmdInput) error {
+func processCsvCmd(logger logger.Logger, repo repository.Repository, in *csvCmdInput) error {
 	var err error
 
 	// Create JSON reader.
@@ -84,14 +81,14 @@ func processCsvCmd(logger logger.CmdLogger, repo repository.Repository, in *csvC
 	case in.raw != "":
 		jr = jsonconv.NewJsonReader(strings.NewReader(in.raw))
 	case in.inputPath != "":
-		fi, err := repo.GetFileReadCloser(in.inputPath)
+		fi, err := repo.GetFileReader(in.inputPath)
 		if err != nil {
 			return err
 		}
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
 	case !repo.IsStdinEmpty():
-		fi := repo.GetStdinReadCloser()
+		fi := repo.GetStdinReader()
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
 	default:
@@ -137,15 +134,12 @@ func processCsvCmd(logger logger.CmdLogger, repo repository.Repository, in *csvC
 	}
 
 	// Output the CSV content.
-	return outputCsvContent(logger, data, in.outputPath, delimRune, in.useCRLF)
+	return outputCsvContent(logger, repo, data, in.outputPath, delimRune, in.useCRLF)
 }
 
-func outputCsvContent(logger logger.CmdLogger, data jsonconv.CsvData, filePath string, delim *rune, useCRLF bool) error {
-	var err error
-
+func outputCsvContent(logger logger.Logger, repo repository.Repository, data jsonconv.CsvData, filePath string, delim *rune, useCRLF bool) error {
 	// Check and override outputPath if necessary.
-	path := filePath
-	if path == "" {
+	if filePath == "" {
 		// Create CSV writer with byte buffer.
 		buf := &bytes.Buffer{}
 		cw := jsonconv.NewCsvWriter(buf)
@@ -155,42 +149,18 @@ func outputCsvContent(logger logger.CmdLogger, data jsonconv.CsvData, filePath s
 		cw.UseCRLF = useCRLF
 
 		// Write to CSV file.
-		err = cw.Write(data)
+		err := cw.Write(data)
 		if err != nil {
 			return err
 		}
 		logger.Printf("%s\n", buf.String())
 	} else {
-		var fi *os.File
-		// Check file path and make dir accordingly.
-		if strings.Contains(path, string(filepath.Separator)) ||
-			strings.HasPrefix(path, ".") ||
-			strings.HasPrefix(path, "~") {
-			// Ensure all dir in path exists.
-			err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
-			if err != nil {
-				return err
-			}
-			fi, err = os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer fi.Close()
-		} else {
-			// Path is only file name so override it with full path (working dir + file name).
-			dir, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-			path = filepath.Join(dir, filePath)
-			fi, err = os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer fi.Close()
-		}
-
 		// Create CSV writer with output file.
+		fi, err := repo.CreateFileWriter(filePath)
+		if err != nil {
+			return err
+		}
+		defer fi.Close()
 		cw := jsonconv.NewCsvWriter(fi)
 		if delim != nil {
 			cw.Delimiter = *delim
@@ -202,7 +172,7 @@ func outputCsvContent(logger logger.CmdLogger, data jsonconv.CsvData, filePath s
 		if err != nil {
 			return err
 		}
-		logger.Printf("The CSV file is located at %s\n", path)
+		logger.Printf("The CSV file is located at %s\n", filePath)
 	}
 	return nil
 }
