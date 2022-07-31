@@ -3,14 +3,12 @@ package cmd
 import (
 	"bytes"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tuan78/jsonconv"
-	"github.com/tuan78/jsonconv/tool/params"
-	"github.com/tuan78/jsonconv/utils"
+	"github.com/tuan78/jsonconv/cmd/logger"
+	"github.com/tuan78/jsonconv/cmd/repository"
 )
 
 func NewCsvCmd() *cobra.Command {
@@ -31,22 +29,24 @@ func NewCsvCmd() *cobra.Command {
 		Long:  "Convert JSON to CSV",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			in := &csvCmdInput{
-				inputPath:  params.InputPath,
-				outputPath: params.OutputPath,
-				raw:        params.RawData,
+				inputPath:  rootFlags.InputPath,
+				outputPath: rootFlags.OutputPath,
+				raw:        rootFlags.RawData,
 				baseHs:     baseHs,
 				delim:      delim,
 				useCRLF:    crlf,
 			}
 			if !noft {
-				in.flattenOp = &jsonconv.FlattenOption{
+				in.flattenOpt = &jsonconv.FlattenOption{
 					Level:     flv,
 					Gap:       fga,
 					SkipMap:   fsm,
 					SkipArray: fsa,
 				}
 			}
-			return processCsvCmd(in)
+			logger := logger.NewLogger(cmd)
+			repo := repository.NewRepository()
+			return processCsvCmd(logger, repo, in)
 		},
 	}
 
@@ -55,10 +55,10 @@ func NewCsvCmd() *cobra.Command {
 	cmd.PersistentFlags().StringVar(&delim, "delim", ",", "field delimiter")
 	cmd.PersistentFlags().BoolVar(&crlf, "crlf", false, "set it true to use \\r\\n as the line terminator")
 	cmd.PersistentFlags().BoolVar(&noft, "noft", false, "set it true to skip JSON flattening")
-	cmd.PersistentFlags().IntVar(&flv, "flv", jsonconv.FlattenLevelDefault, "flatten level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
-	cmd.PersistentFlags().StringVar(&fga, "fga", jsonconv.FlattenGapDefault, "flatten gap for separating JSON object with its nested data")
-	cmd.PersistentFlags().BoolVar(&fsm, "fsm", false, "flatten but skip map type")
-	cmd.PersistentFlags().BoolVar(&fsa, "fsa", false, "flatten but skip array type")
+	cmd.PersistentFlags().IntVar(&flv, "flv", jsonconv.DefaultFlattenLevel, "flatten level for flattening a nested JSON (-1: unlimited, 0: no nested, [1...n]: n level of nested JSON)")
+	cmd.PersistentFlags().StringVar(&fga, "fga", jsonconv.DefaultFlattenGap, "flatten gap for separating JSON object with its nested data")
+	cmd.PersistentFlags().BoolVar(&fsm, "fsm", false, "set it true to flatten but skip map type")
+	cmd.PersistentFlags().BoolVar(&fsa, "fsa", false, "set it true to flatten but skip array type")
 	return cmd
 }
 
@@ -69,10 +69,10 @@ type csvCmdInput struct {
 	baseHs     []string
 	delim      string
 	useCRLF    bool
-	flattenOp  *jsonconv.FlattenOption
+	flattenOpt *jsonconv.FlattenOption
 }
 
-func processCsvCmd(in *csvCmdInput) error {
+func processCsvCmd(logger logger.Logger, repo repository.Repository, in *csvCmdInput) error {
 	var err error
 
 	// Create JSON reader.
@@ -81,14 +81,14 @@ func processCsvCmd(in *csvCmdInput) error {
 	case in.raw != "":
 		jr = jsonconv.NewJsonReader(strings.NewReader(in.raw))
 	case in.inputPath != "":
-		fi, err := os.Open(in.inputPath)
+		fi, err := repo.GetFileReader(in.inputPath)
 		if err != nil {
 			return err
 		}
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
-	case !utils.IsStdinEmpty():
-		fi := os.Stdin
+	case !repo.IsStdinEmpty():
+		fi := repo.GetStdinReader()
 		defer fi.Close()
 		jr = jsonconv.NewJsonReader(fi)
 	default:
@@ -99,32 +99,32 @@ func processCsvCmd(in *csvCmdInput) error {
 	var encoded interface{}
 	err = jr.Read(&encoded)
 	if err != nil {
-		return err
+		return fmt.Errorf("invalid JSON data, %v", err)
 	}
 	var arr jsonconv.JsonArray
 	switch val := encoded.(type) {
 	case []interface{}:
 		for _, v := range val {
-			if obj, ok := v.(jsonconv.JsonObject); ok {
-				arr = append(arr, obj)
+			obj, ok := v.(jsonconv.JsonObject)
+			if !ok {
+				return fmt.Errorf("unsupport type of JSON data")
+			}
+			if len(obj) == 0 {
 				continue
 			}
-			return fmt.Errorf("unknown type of JSON data")
+			arr = append(arr, obj)
 		}
 	case jsonconv.JsonObject:
-		arr = append(arr, val)
-	default:
-		return fmt.Errorf("unknown type of JSON data")
+		if len(val) != 0 {
+			arr = append(arr, val)
+		}
 	}
 
 	// Convert JSON to CSV.
 	data := jsonconv.ToCsv(arr, &jsonconv.ToCsvOption{
-		FlattenOption: in.flattenOp,
+		FlattenOption: in.flattenOpt,
 		BaseHeaders:   in.baseHs,
 	})
-	if len(data) == 0 {
-		return fmt.Errorf("empty CSV data")
-	}
 
 	// Convert in.delim to rune.
 	runes := []rune(in.delim)
@@ -134,60 +134,37 @@ func processCsvCmd(in *csvCmdInput) error {
 	}
 
 	// Output the CSV content.
-	return outputCsvContent(data, in.outputPath, delimRune, in.useCRLF)
+	return outputCsvContent(logger, repo, data, in.outputPath, delimRune, in.useCRLF)
 }
 
-func outputCsvContent(data jsonconv.CsvData, filePath string, delim *rune, useCRLF bool) error {
-	var err error
-
+func outputCsvContent(logger logger.Logger, repo repository.Repository, data jsonconv.CsvData, filePath string, delim *rune, useCRLF bool) error {
 	// Check and override outputPath if necessary.
-	path := filePath
-	if path == "" {
+	if filePath == "" {
 		// Create CSV writer with byte buffer.
 		buf := &bytes.Buffer{}
 		cw := jsonconv.NewCsvWriter(buf)
-		cw.Delimiter = delim
+		if delim != nil {
+			cw.Delimiter = *delim
+		}
 		cw.UseCRLF = useCRLF
 
 		// Write to CSV file.
-		err = cw.Write(data)
+		err := cw.Write(data)
 		if err != nil {
 			return err
 		}
-		fmt.Printf("%s\n", buf.String())
+		logger.Printf("%s\n", buf.String())
 	} else {
-		var fi *os.File
-		// Check file path and make dir accordingly.
-		if strings.Contains(path, string(filepath.Separator)) ||
-			strings.HasPrefix(path, ".") ||
-			strings.HasPrefix(path, "~") {
-			// Ensure all dir in path exists.
-			err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
-			if err != nil {
-				return err
-			}
-			fi, err = os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer fi.Close()
-		} else {
-			// Path is only file name so override it with full path (working dir + file name).
-			dir, err := os.Getwd()
-			if err != nil {
-				return err
-			}
-			path = filepath.Join(dir, filePath)
-			fi, err = os.Create(path)
-			if err != nil {
-				return err
-			}
-			defer fi.Close()
-		}
-
 		// Create CSV writer with output file.
+		fi, err := repo.CreateFileWriter(filePath)
+		if err != nil {
+			return err
+		}
+		defer fi.Close()
 		cw := jsonconv.NewCsvWriter(fi)
-		cw.Delimiter = delim
+		if delim != nil {
+			cw.Delimiter = *delim
+		}
 		cw.UseCRLF = useCRLF
 
 		// Write to CSV file.
@@ -195,7 +172,7 @@ func outputCsvContent(data jsonconv.CsvData, filePath string, delim *rune, useCR
 		if err != nil {
 			return err
 		}
-		fmt.Printf("The CSV file is located at %s\n", path)
+		logger.Printf("The CSV file is located at %s\n", filePath)
 	}
 	return nil
 }

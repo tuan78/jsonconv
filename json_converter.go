@@ -14,24 +14,24 @@ type ToCsvOption struct {
 	BaseHeaders CsvRow
 }
 
-// ToCsv converts a JsonArray to CsvData with given op.
-func ToCsv(arr JsonArray, op *ToCsvOption) CsvData {
+// ToCsv converts a JsonArray to CsvData with given opt.
+func ToCsv(arr JsonArray, opt *ToCsvOption) CsvData {
 	if len(arr) == 0 {
 		return CsvData{}
 	}
 
 	// Flatten JSON.
-	if op != nil && op.FlattenOption != nil {
+	if opt != nil && opt.FlattenOption != nil {
 		for _, obj := range arr {
-			FlattenJsonObject(obj, op.FlattenOption)
+			FlattenJsonObject(obj, opt.FlattenOption)
 		}
 	}
 
 	// Create CSV rows.
 	var csvData CsvData
 	var hs []string
-	if op != nil && len(op.BaseHeaders) > 0 {
-		hs = CreateCsvHeader(arr, op.BaseHeaders)
+	if opt != nil && len(opt.BaseHeaders) > 0 {
+		hs = CreateCsvHeader(arr, opt.BaseHeaders)
 	} else {
 		hs = CreateCsvHeader(arr, nil)
 	}

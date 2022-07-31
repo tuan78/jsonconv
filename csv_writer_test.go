@@ -14,7 +14,7 @@ func TestCsvWriter_InvalidDelimiter(t *testing.T) {
 	}
 	buf := &bytes.Buffer{}
 	wr := NewCsvWriter(buf)
-	wr.Delimiter = NewDelimiter('\n')
+	wr.Delimiter = '\n'
 
 	// Process
 	err := wr.Write(data)
@@ -49,7 +49,7 @@ func TestCsvWriter(t *testing.T) {
 	}
 	buf := &bytes.Buffer{}
 	wr := NewCsvWriter(buf)
-	wr.Delimiter = NewDelimiter('|')
+	wr.Delimiter = '|'
 
 	// Process
 	err := wr.Write(data)
