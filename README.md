@@ -231,8 +231,8 @@ Next, to see what jsonconv cmd can do, you can run `help` for any command. For e
 
 ```
 jsonconv help
-jsonconv csv help
-jsonconv flatten help
+jsonconv csv --help
+jsonconv flatten --help
 ```
 
 ## Flatten JSON Object or JSON Array
