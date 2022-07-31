@@ -31,13 +31,13 @@ func TestProcessCsvCmd_ReadFileError(t *testing.T) {
 	}
 	logger := NewMockLogger()
 	repo := NewMockRepository()
-	repo.openFileError = fmt.Errorf("mock open file error")
+	repo.fileOpeningError = fmt.Errorf("mock open file error")
 
 	// Process
 	err := processCsvCmd(logger, repo, in)
 
 	// Check
-	expMsg := repo.openFileError.Error()
+	expMsg := repo.fileOpeningError.Error()
 	if err.Error() != expMsg {
 		t.Fatalf("It should throw an error with message: %s", expMsg)
 	}
@@ -57,13 +57,13 @@ func TestProcessCsvCmd_CreateFileError(t *testing.T) {
 	}
 	logger := NewMockLogger()
 	repo := NewMockRepository()
-	repo.createFileError = fmt.Errorf("mock create file error")
+	repo.fileCreatingError = fmt.Errorf("mock create file error")
 
 	// Process
 	err := processCsvCmd(logger, repo, in)
 
 	// Check
-	expMsg := repo.createFileError.Error()
+	expMsg := repo.fileCreatingError.Error()
 	if err.Error() != expMsg {
 		t.Fatalf("It should throw an error with message: %s", expMsg)
 	}
@@ -368,7 +368,7 @@ func TestProcessCsvCmd_ReadFromJsonFile(t *testing.T) {
 	}
 	logger := NewMockLogger()
 	repo := NewMockRepository()
-	repo.readContent = `
+	repo.readerContent = `
 	{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
@@ -418,7 +418,7 @@ func TestProcessCsvCmd_ReadFromStdin(t *testing.T) {
 	logger := NewMockLogger()
 	repo := NewMockRepository()
 	repo.isStdinEmpty = false // fake stdin data
-	repo.readContent = `
+	repo.readerContent = `
 	{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
@@ -500,7 +500,7 @@ func TestProcessCsvCmd_ToCsvFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to process CSV cmd, err: %v", err)
 	}
-	msg := strings.TrimSpace(repo.writeBuffer.String())
+	msg := strings.TrimSpace(repo.writerBuffer.String())
 	expMsg := `z|y|x|id|is active|nested__a|nested__b|nested__c__d__e|nested__f[0]|nested__f[1]|nested__f[2]|nested__g__h|nested__g__i|nested__g__j|nested__g__k|nested__g__l|score|user
 |||b042ab5c-ca73-4460-b739-96410ea9d3a6|false|1|2|3|4|5|6|A|true|1|1.5||-100|Jon Doe`
 	if msg != expMsg {

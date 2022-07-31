@@ -31,11 +31,11 @@ func (l *mockLogger) Printf(format string, i ...interface{}) {
 
 // Mock Repository.
 type mockRepository struct {
-	readContent     string
-	writeBuffer     *bytes.Buffer
-	isStdinEmpty    bool
-	openFileError   error
-	createFileError error
+	readerContent     string
+	writerBuffer      *bytes.Buffer
+	isStdinEmpty      bool
+	fileOpeningError  error
+	fileCreatingError error
 }
 
 func NewMockRepository() *mockRepository {
@@ -45,16 +45,16 @@ func NewMockRepository() *mockRepository {
 }
 
 func (r *mockRepository) GetFileReader(path string) (io.ReadCloser, error) {
-	if r.openFileError != nil {
-		return nil, r.openFileError
+	if r.fileOpeningError != nil {
+		return nil, r.fileOpeningError
 	}
-	re := strings.NewReader(r.readContent)
+	re := strings.NewReader(r.readerContent)
 	recl := io.NopCloser(re)
 	return recl, nil
 }
 
 func (r *mockRepository) GetStdinReader() io.ReadCloser {
-	re := strings.NewReader(r.readContent)
+	re := strings.NewReader(r.readerContent)
 	recl := io.NopCloser(re)
 	return recl
 }
@@ -64,9 +64,9 @@ func (r *mockRepository) IsStdinEmpty() bool {
 }
 
 func (r *mockRepository) CreateFileWriter(path string) (io.WriteCloser, error) {
-	if r.createFileError != nil {
-		return nil, r.createFileError
+	if r.fileCreatingError != nil {
+		return nil, r.fileCreatingError
 	}
-	r.writeBuffer = &bytes.Buffer{}
-	return &WriteNopCloser{Writer: r.writeBuffer}, nil
+	r.writerBuffer = &bytes.Buffer{}
+	return &WriteNopCloser{Writer: r.writerBuffer}, nil
 }

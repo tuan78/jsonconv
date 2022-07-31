@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tuan78/jsonconv/tool/utils"
+	"github.com/tuan78/jsonconv/cmd/utils"
 )
 
 type (

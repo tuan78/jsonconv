@@ -7,8 +7,8 @@ import (
 
 	"github.com/spf13/cobra"
 	"github.com/tuan78/jsonconv"
-	"github.com/tuan78/jsonconv/tool/logger"
-	"github.com/tuan78/jsonconv/tool/repository"
+	"github.com/tuan78/jsonconv/cmd/logger"
+	"github.com/tuan78/jsonconv/cmd/repository"
 )
 
 func NewCsvCmd() *cobra.Command {

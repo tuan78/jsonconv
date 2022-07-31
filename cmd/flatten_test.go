@@ -30,13 +30,13 @@ func TestProcessFlattenCmd_ReadFileError(t *testing.T) {
 	}
 	logger := NewMockLogger()
 	repo := NewMockRepository()
-	repo.openFileError = fmt.Errorf("mock open file error")
+	repo.fileOpeningError = fmt.Errorf("mock open file error")
 
 	// Process
 	err := processFlattenCmd(logger, repo, in)
 
 	// Check
-	expMsg := repo.openFileError.Error()
+	expMsg := repo.fileOpeningError.Error()
 	if err.Error() != expMsg {
 		t.Fatalf("It should throw an error with message: %s", expMsg)
 	}
@@ -56,13 +56,13 @@ func TestProcessFlattenCmd_CreateFileError(t *testing.T) {
 	}
 	logger := NewMockLogger()
 	repo := NewMockRepository()
-	repo.createFileError = fmt.Errorf("mock create file error")
+	repo.fileCreatingError = fmt.Errorf("mock create file error")
 
 	// Process
 	err := processFlattenCmd(logger, repo, in)
 
 	// Check
-	expMsg := repo.createFileError.Error()
+	expMsg := repo.fileCreatingError.Error()
 	if err.Error() != expMsg {
 		t.Fatalf("It should throw an error with message: %s", expMsg)
 	}
@@ -263,7 +263,7 @@ func TestProcessFlattenCmd_ReadFromJsonFile(t *testing.T) {
 	}
 	logger := NewMockLogger()
 	repo := NewMockRepository()
-	repo.readContent = `
+	repo.readerContent = `
 	{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
@@ -308,7 +308,7 @@ func TestProcessFlattenCmd_ReadFromStdin(t *testing.T) {
 	logger := NewMockLogger()
 	repo := NewMockRepository()
 	repo.isStdinEmpty = false // fake stdin data
-	repo.readContent = `
+	repo.readerContent = `
 	{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
@@ -386,7 +386,7 @@ func TestProcessFlattenCmd_ToJsonFile(t *testing.T) {
 	if err != nil {
 		t.Fatalf("failed to process flatten cmd, err: %v", err)
 	}
-	msg := strings.TrimSpace(repo.writeBuffer.String())
+	msg := strings.TrimSpace(repo.writerBuffer.String())
 	expMsg := `{"id":"b042ab5c-ca73-4460-b739-96410ea9d3a6","is active":false,"nested__a":1,"nested__b":2,"nested__c__d__e":3,"nested__f[0]":4,"nested__f[1]":5,"nested__f[2]":6,"nested__g__h":"A","nested__g__i":true,"nested__g__j":1,"nested__g__k":1.5,"nested__g__l":"","score":-100,"user":"Jon Doe"}`
 	if msg != expMsg {
 		t.Fatalf("It should show message: %s\ncurrent: %s", expMsg, msg)

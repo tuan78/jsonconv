@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tuan78/jsonconv/tool/cmd"
+	"github.com/tuan78/jsonconv/cmd"
 )
 
 func main() {
