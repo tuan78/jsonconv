@@ -8,7 +8,7 @@ import (
 )
 
 var (
-	version = "v0.2.0"
+	version = "v1.0.0"
 )
 
 type RootFlags struct {
@@ -30,9 +30,9 @@ func NewRootCmd() *cobra.Command {
 		},
 	}
 	// Add flags.
-	cmd.PersistentFlags().StringVarP(&rootFlags.RawData, "data", "d", "", "raw JSON array data")
-	cmd.PersistentFlags().StringVarP(&rootFlags.InputPath, "in", "i", "", "input file path")
-	cmd.PersistentFlags().StringVarP(&rootFlags.OutputPath, "out", "o", "", "output file path")
+	cmd.PersistentFlags().StringVarP(&rootFlags.RawData, "data", "d", "", "raw JSON data. If both '--data' and '--in' are not set, reads from Stdin instead")
+	cmd.PersistentFlags().StringVarP(&rootFlags.InputPath, "in", "i", "", "input file path. If both '--data' and '--in' are not set, reads from Stdin instead")
+	cmd.PersistentFlags().StringVarP(&rootFlags.OutputPath, "out", "o", "", "output file path. It not set, prints to Stdout instead")
 
 	// Add commands.
 	cmd.AddCommand(NewFlattenCmd())
