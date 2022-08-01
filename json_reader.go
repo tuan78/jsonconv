@@ -19,7 +19,7 @@ func NewJsonReader(r io.Reader) *JsonReader {
 
 // Read reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
-func (r *JsonReader) Read(v any) error {
+func (r *JsonReader) Read(v interface{}) error {
 	decoder := json.NewDecoder(r.reader)
 	for decoder.More() {
 		err := decoder.Decode(v)

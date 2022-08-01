@@ -26,7 +26,7 @@ func NewJsonWriter(w io.Writer) *JsonWriter {
 
 // Write writes the JSON encoding of v to the stream,
 // followed by a newline character.
-func (r *JsonWriter) Write(v any) error {
+func (r *JsonWriter) Write(v interface{}) error {
 	encoder := json.NewEncoder(r.writer)
 	encoder.SetEscapeHTML(r.EscapeHTML)
 	return encoder.Encode(v)
