@@ -1,8 +1,12 @@
-.PHONY: all test
-all: build
-
-build:
-	go build -o bin/jsonconv github.com/tuan78/jsonconv/cmd/jsonconv
-
+.PHONY: test
 test:
-	go test ./... -cover
+	go test -cover -race ./...
+
+.PHONY: cover
+cover:
+	go test -race -coverprofile=cover.out -coverpkg=./... ./...
+	go tool cover -html=cover.out -o cover.html
+
+.PHONY: bench
+bench:
+	cd ./benchmarks && go test -bench=. -run="^$$" -cpuprofile=cpu.pprof -memprofile=mem.pprof -benchmem
