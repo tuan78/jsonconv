@@ -1,0 +1,54 @@
+name: Test and coverage
+
+on: [push, pull_request]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout current branch
+        uses: actions/checkout@v2
+
+      - name: Setup Golang
+        uses: actions/setup-go@v2
+        with:
+          go-version: '1.18'
+      
+      - name: Load cached dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cache/go-build
+            ~/go/pkg/mod
+          key: ${{ runner.os }}-go-${{ hashFiles('**/go.sum') }}
+          restore-keys: |
+            ${{ runner.os }}-go-
+
+      - name: Download Dependencies
+        run: |
+          go mod download
+          (cd cmd && go mod download)
+          (cd benchmarks && go mod download)
+
+      - name: Run coverage
+        run: | 
+          make cover
+          (cd cmd && make cover)
+
+      - name: Upload lib coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./cover.out
+          flags: lib
+          name: lib
+          fail_ci_if_error: true
+          verbose: true
+
+      - name: Upload cmd coverage to Codecov
+        uses: codecov/codecov-action@v3
+        with:
+          files: ./cmd/cover.out
+          flags: cmd
+          name: cmd
+          fail_ci_if_error: true
+          verbose: true
