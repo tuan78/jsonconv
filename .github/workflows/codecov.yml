@@ -42,6 +42,7 @@ jobs:
       - name: Upload lib coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
+          token: ${{secrets.CODECOV_TOKEN}}
           files: ./cover.out
           flags: lib
           name: lib
@@ -51,6 +52,7 @@ jobs:
       - name: Upload cmd coverage to Codecov
         uses: codecov/codecov-action@v3
         with:
+          token: ${{secrets.CODECOV_TOKEN}}
           files: ./cmd/cover.out
           flags: cmd
           name: cmd
