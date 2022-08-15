@@ -17,3 +17,7 @@ coverage:
         target: 90%
         flags:
           - cmd
+
+ignore:
+  - "cmd/repository" # ignore until we updated unit tests for it
+  - "cmd/logger"     # ignore until we updated unit tests for it
