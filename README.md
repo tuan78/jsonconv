@@ -1,6 +1,8 @@
 # jsonconv
 
 [![Go Reference](https://pkg.go.dev/badge/github.com/tuan78/jsonconv.svg)](https://pkg.go.dev/github.com/tuan78/jsonconv)
+[![CI](https://github.com/tuan78/jsonconv/actions/workflows/codecov.yml/badge.svg)](https://github.com/tuan78/jsonconv/actions/workflows/codecov.yml)
+[![codecov](https://codecov.io/gh/tuan78/jsonconv/branch/main/graph/badge.svg?token=4NLTWR5XNW)](https://codecov.io/gh/tuan78/jsonconv)
 [![Go Report Card](https://goreportcard.com/badge/github.com/tuan78/jsonconv)](https://goreportcard.com/report/github.com/tuan78/jsonconv)
 ![GitHub](https://img.shields.io/github/license/tuan78/jsonconv)
 
