@@ -1,14 +1,15 @@
-package cmd
+package cli
 
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tuan78/jsonconv"
-	"github.com/tuan78/jsonconv/cmd/logger"
-	"github.com/tuan78/jsonconv/cmd/repository"
+	"github.com/tuan78/jsonconv/internal/cli/logger"
+	"github.com/tuan78/jsonconv/internal/cli/repository"
 )
 
 func NewCsvCmd() *cobra.Command {
@@ -27,7 +28,7 @@ func NewCsvCmd() *cobra.Command {
 		Use:   "csv",
 		Short: "Convert JSON to CSV",
 		Long:  "Convert JSON to CSV",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			in := &csvCmdInput{
 				inputPath:  rootFlags.InputPath,
 				outputPath: rootFlags.OutputPath,
@@ -86,26 +87,35 @@ func processCsvCmd(logger logger.Logger, repo repository.Repository, in *csvCmdI
 			return err
 		}
 		defer fi.Close()
-		jr = jsonconv.NewJsonReader(fi)
+		data, err := io.ReadAll(fi)
+		if err != nil {
+			return fmt.Errorf("failed to read input file: %w", err)
+		}
+		jr = jsonconv.NewJsonReader(bytes.NewReader(data))
 	case !repo.IsStdinEmpty():
 		fi := repo.GetStdinReader()
 		defer fi.Close()
-		jr = jsonconv.NewJsonReader(fi)
+		data, err := io.ReadAll(fi)
+		if err != nil {
+			return fmt.Errorf("failed to read stdin: %w", err)
+		}
+		jr = jsonconv.NewJsonReader(bytes.NewReader(data))
 	default:
 		return fmt.Errorf("need to input either raw data, input file path or data from stdin")
 	}
 
 	// Read and parse JSON data.
-	var encoded interface{}
+	var encoded any
 	err = jr.Read(&encoded)
 	if err != nil {
 		return fmt.Errorf("invalid JSON data, %v", err)
 	}
-	var arr jsonconv.JsonArray
+
+	var arr []map[string]any
 	switch val := encoded.(type) {
-	case []interface{}:
+	case []any:
 		for _, v := range val {
-			obj, ok := v.(jsonconv.JsonObject)
+			obj, ok := v.(map[string]any)
 			if !ok {
 				return fmt.Errorf("unsupport type of JSON data")
 			}
@@ -114,10 +124,12 @@ func processCsvCmd(logger logger.Logger, repo repository.Repository, in *csvCmdI
 			}
 			arr = append(arr, obj)
 		}
-	case jsonconv.JsonObject:
+	case map[string]any:
 		if len(val) != 0 {
 			arr = append(arr, val)
 		}
+	default:
+		return fmt.Errorf("unsupport type of JSON data")
 	}
 
 	// Convert JSON to CSV.
@@ -137,7 +149,7 @@ func processCsvCmd(logger logger.Logger, repo repository.Repository, in *csvCmdI
 	return outputCsvContent(logger, repo, data, in.outputPath, delimRune, in.useCRLF)
 }
 
-func outputCsvContent(logger logger.Logger, repo repository.Repository, data jsonconv.CsvData, filePath string, delim *rune, useCRLF bool) error {
+func outputCsvContent(logger logger.Logger, repo repository.Repository, data [][]string, filePath string, delim *rune, useCRLF bool) error {
 	// Check and override outputPath if necessary.
 	if filePath == "" {
 		// Create CSV writer with byte buffer.

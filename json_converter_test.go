@@ -7,7 +7,7 @@ import (
 
 func TestToCsv_EmptyArray(t *testing.T) {
 	// Prepare
-	data := JsonArray{}
+	data := []map[string]any{}
 
 	// Process
 	csvData := ToCsv(data, nil)
@@ -20,7 +20,7 @@ func TestToCsv_EmptyArray(t *testing.T) {
 
 func TestToCsv_NonFlatten(t *testing.T) {
 	// Prepare
-	data := JsonArray{
+	data := []map[string]any{
 		{
 			"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 			"user":      "Jon Doe",
@@ -38,7 +38,7 @@ func TestToCsv_NonFlatten(t *testing.T) {
 			"user":      "Tuấn",
 			"score":     1.5,
 			"is active": true,
-			"nested": JsonObject{
+			"nested": map[string]any{
 				"a": 1,
 				"b": 2,
 			},
@@ -79,7 +79,7 @@ func TestToCsv_NonFlatten(t *testing.T) {
 
 func TestToCsv_WithBaseHeader(t *testing.T) {
 	// Prepare
-	data := JsonArray{
+	data := []map[string]any{
 		{
 			"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 			"user":      "Jon Doe",
@@ -97,7 +97,7 @@ func TestToCsv_WithBaseHeader(t *testing.T) {
 			"user":      "Tuấn",
 			"score":     1.5,
 			"is active": true,
-			"nested": JsonObject{
+			"nested": map[string]any{
 				"a": 1,
 				"b": 2,
 			},
@@ -140,7 +140,7 @@ func TestToCsv_WithBaseHeader(t *testing.T) {
 
 func TestToCsv_WithFlattening(t *testing.T) {
 	// Prepare
-	data := JsonArray{
+	data := []map[string]any{
 		{
 			"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 			"user":      "Jon Doe",
@@ -158,7 +158,7 @@ func TestToCsv_WithFlattening(t *testing.T) {
 			"user":      "Tuấn",
 			"score":     1.5,
 			"is active": true,
-			"nested": JsonObject{
+			"nested": map[string]any{
 				"a": 1,
 				"b": 2,
 			},
@@ -204,7 +204,7 @@ func TestToCsv_WithFlattening(t *testing.T) {
 
 func TestCreateCsvHeader(t *testing.T) {
 	// Prepare
-	data := JsonArray{
+	data := []map[string]any{
 		{
 			"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 			"user":      "Jon Doe",
@@ -222,7 +222,7 @@ func TestCreateCsvHeader(t *testing.T) {
 			"user":      "Tuấn",
 			"score":     1.5,
 			"is active": true,
-			"nested": JsonObject{
+			"nested": map[string]any{
 				"a": 1,
 				"b": 2,
 			},

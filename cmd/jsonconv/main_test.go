@@ -5,14 +5,14 @@ import (
 	"testing"
 )
 
-func TestMainFn_GoodArgs(t *testing.T) {
+func TestMainFn_GoodArgs(_ *testing.T) {
 	os.Args = []string{"jsonconv", "--help"}
 	main()
 }
 
 func TestMainFn_BadArgs(t *testing.T) {
 	exitCode := 0
-	exitFn = func(code int) { exitCode = 1 }
+	exitFn = func(_ int) { exitCode = 1 }
 	os.Args = []string{"jsonconv", "bad-args"}
 	main()
 	if exitCode == 0 {

@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"flag"
@@ -8,7 +8,9 @@ import (
 )
 
 var (
-	version = "v1.0.0"
+	// version can be set at build time using ldflags:
+	// go build -ldflags="-X 'github.com/tuan78/jsonconv/cmd.version=v1.2.3'"
+	version = "dev"
 )
 
 type RootFlags struct {
@@ -25,7 +27,7 @@ func NewRootCmd() *cobra.Command {
 		Short:   "Tool for flattening JSON and converting JSON to CSV",
 		Long:    "Tool for flattening JSON and converting JSON to CSV",
 		Version: version,
-		PersistentPreRun: func(cmd *cobra.Command, args []string) {
+		PersistentPreRun: func(_ *cobra.Command, _ []string) {
 			flag.Parse()
 		},
 	}

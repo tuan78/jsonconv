@@ -1,14 +1,15 @@
-package cmd
+package cli
 
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"strings"
 
 	"github.com/spf13/cobra"
 	"github.com/tuan78/jsonconv"
-	"github.com/tuan78/jsonconv/cmd/logger"
-	"github.com/tuan78/jsonconv/cmd/repository"
+	"github.com/tuan78/jsonconv/internal/cli/logger"
+	"github.com/tuan78/jsonconv/internal/cli/repository"
 )
 
 func NewFlattenCmd() *cobra.Command {
@@ -23,7 +24,7 @@ func NewFlattenCmd() *cobra.Command {
 		Use:   "flatten",
 		Short: "Flatten JSON object and JSON array",
 		Long:  "Flatten JSON object and JSON array",
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			in := &flattenCmdInput{
 				inputPath:  rootFlags.InputPath,
 				outputPath: rootFlags.OutputPath,
@@ -69,28 +70,35 @@ func processFlattenCmd(logger logger.Logger, repo repository.Repository, in *fla
 			return err
 		}
 		defer fi.Close()
-		jr = jsonconv.NewJsonReader(fi)
+		data, err := io.ReadAll(fi)
+		if err != nil {
+			return fmt.Errorf("failed to read input file: %w", err)
+		}
+		jr = jsonconv.NewJsonReader(bytes.NewReader(data))
 	case !repo.IsStdinEmpty():
 		fi := repo.GetStdinReader()
 		defer fi.Close()
-		jr = jsonconv.NewJsonReader(fi)
+		data, err := io.ReadAll(fi)
+		if err != nil {
+			return fmt.Errorf("failed to read stdin: %w", err)
+		}
+		jr = jsonconv.NewJsonReader(bytes.NewReader(data))
 	default:
 		return fmt.Errorf("need to input either raw data, input file path or data from stdin")
 	}
 
 	// Read and parse JSON data.
-	var encoded interface{}
+	var encoded any
 	err = jr.Read(&encoded)
 	if err != nil {
 		return fmt.Errorf("invalid JSON data, %v", err)
 	}
 
-	var flattened interface{}
 	switch val := encoded.(type) {
-	case []interface{}:
-		var arr jsonconv.JsonArray
+	case []any:
+		var arr []map[string]any
 		for _, v := range val {
-			if obj, ok := v.(jsonconv.JsonObject); ok {
+			if obj, ok := v.(map[string]any); ok {
 				arr = append(arr, obj)
 				continue
 			}
@@ -99,21 +107,19 @@ func processFlattenCmd(logger logger.Logger, repo repository.Repository, in *fla
 
 		// Flatten JSON array.
 		for _, obj := range arr {
-			jsonconv.FlattenJsonObject(obj, in.flattenOpt)
+			jsonconv.Flatten(obj, in.flattenOpt)
 		}
-		flattened = arr
 		return outputJsonContent(logger, repo, arr, in.outputPath)
-	case jsonconv.JsonObject:
+	case map[string]any:
 		// Flatten JSON object.
-		jsonconv.FlattenJsonObject(val, in.flattenOpt)
-		flattened = val
+		jsonconv.Flatten(val, in.flattenOpt)
+		return outputJsonContent(logger, repo, val, in.outputPath)
 	}
 
-	// Output the JSON content.
-	return outputJsonContent(logger, repo, flattened, in.outputPath)
+	return fmt.Errorf("unsupported JSON data type")
 }
 
-func outputJsonContent(logger logger.Logger, repo repository.Repository, data interface{}, filePath string) error {
+func outputJsonContent(logger logger.Logger, repo repository.Repository, data any, filePath string) error {
 	// Check and override outputPath if necessary.
 	if filePath == "" {
 		// Create JSON writer with byte buffer.

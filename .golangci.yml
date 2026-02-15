@@ -1,0 +1,82 @@
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+
+linters:
+  enable:
+    - errcheck      # Check for unchecked errors
+    - gosimple      # Simplify code
+    - govet         # Reports suspicious constructs
+    - ineffassign   # Detects unused assignments
+    - staticcheck   # Static analysis checks
+    - unused        # Checks for unused constants, variables, functions and types
+    - gofmt         # Checks whether code was gofmt-ed
+    - goimports     # Check import statements are formatted
+    - misspell      # Finds commonly misspelled English words
+    - unconvert     # Remove unnecessary type conversions
+    - unparam       # Reports unused function parameters
+    - gosec         # Inspects source code for security problems
+    - revive        # Fast, configurable, extensible, flexible, and beautiful linter for Go
+    - stylecheck    # Replacement for golint
+    - typecheck     # Like the front-end of a Go compiler, parses and type-checks Go code
+
+linters-settings:
+  errcheck:
+    check-blank: true
+    check-type-assertions: true
+  
+  govet:
+    enable-all: true
+    disable:
+      - shadow
+      - fieldalignment
+  
+  gofmt:
+    simplify: true
+  
+  revive:
+    confidence: 0.8
+    rules:
+      - name: blank-imports
+      - name: context-as-argument
+      - name: context-keys-type
+      - name: dot-imports
+      - name: error-return
+      - name: error-strings
+      - name: error-naming
+      - name: exported
+      - name: if-return
+      - name: increment-decrement
+      - name: package-comments
+      - name: range
+      - name: receiver-naming
+      - name: time-naming
+      - name: unexported-return
+      - name: indent-error-flow
+      - name: errorf
+      - name: empty-block
+      - name: superfluous-else
+      - name: unused-parameter
+      - name: unreachable-code
+      - name: redefines-builtin-id
+
+  gosec:
+    excludes:
+      - G104  # Audit errors not checked (covered by errcheck)
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: "_test\\.go"
+      linters:
+        - errcheck
+        - gosec
+        - unparam
+    
+    # Exclude JSON/Json naming convention checks to avoid breaking API changes
+    - linters:
+        - stylecheck
+      text: "ST1003.*JSON"

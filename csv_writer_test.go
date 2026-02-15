@@ -7,7 +7,7 @@ import (
 
 func TestCsvWriter_InvalidDelimiter(t *testing.T) {
 	// Prepare
-	data := CsvData{
+	data := [][]string{
 		{
 			"id", "user", "score", "is active",
 		},
@@ -27,7 +27,7 @@ func TestCsvWriter_InvalidDelimiter(t *testing.T) {
 
 func TestCsvWriter(t *testing.T) {
 	// Prepare
-	data := CsvData{
+	data := [][]string{
 		{
 			"id", "user", "score", "is active",
 		},

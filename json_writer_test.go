@@ -7,7 +7,7 @@ import (
 
 func TestJsonWriter_JsonObject(t *testing.T) {
 	// Prepare
-	data := JsonObject{
+	data := map[string]any{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
 		"score":     -100,
@@ -42,7 +42,7 @@ func TestJsonWriter_JsonObject(t *testing.T) {
 
 func TestJsonWriter_JsonArray(t *testing.T) {
 	// Prepare
-	data := JsonArray{
+	data := []map[string]any{
 		{
 			"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 			"user":      "Jon Doe",
