@@ -11,24 +11,24 @@ type ToCsvOption struct {
 	FlattenOption *FlattenOption
 
 	// Base CSV headers used to add before dynamic headers
-	BaseHeaders CsvRow
+	BaseHeaders []string
 }
 
-// ToCsv converts a JsonArray to CsvData with given opt.
-func ToCsv(arr JsonArray, opt *ToCsvOption) CsvData {
+// ToCsv converts a JSON array to [][]string with given opt.
+func ToCsv(arr []map[string]any, opt *ToCsvOption) [][]string {
 	if len(arr) == 0 {
-		return CsvData{}
+		return [][]string{}
 	}
 
 	// Flatten JSON.
 	if opt != nil && opt.FlattenOption != nil {
 		for _, obj := range arr {
-			FlattenJsonObject(obj, opt.FlattenOption)
+			Flatten(obj, opt.FlattenOption)
 		}
 	}
 
 	// Create CSV rows.
-	var csvData CsvData
+	var csvData [][]string
 	var hs []string
 	if opt != nil && len(opt.BaseHeaders) > 0 {
 		hs = CreateCsvHeader(arr, opt.BaseHeaders)
@@ -37,7 +37,7 @@ func ToCsv(arr JsonArray, opt *ToCsvOption) CsvData {
 	}
 	csvData = append(csvData, hs)
 	for _, obj := range arr {
-		row := make(CsvRow, 0)
+		row := make([]string, 0)
 		for _, h := range hs {
 			if val, exist := obj[h]; exist {
 				row = append(row, fmt.Sprintf("%v", val))
@@ -51,10 +51,10 @@ func ToCsv(arr JsonArray, opt *ToCsvOption) CsvData {
 	return csvData
 }
 
-// CreateCsvHeader creates CsvRow from arr and baseHs.
+// CreateCsvHeader creates []string from arr and baseHs.
 // A baseHs is base header that we want to put at the beginning of dynamic header,
 // we can set baseHs to nil if we just want to have dynamic header only.
-func CreateCsvHeader(arr JsonArray, baseHs CsvRow) CsvRow {
+func CreateCsvHeader(arr []map[string]any, baseHs []string) []string {
 	hs := make(sort.StringSlice, 0)
 	hss := make(map[string]struct{})
 

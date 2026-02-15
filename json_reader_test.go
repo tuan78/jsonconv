@@ -8,7 +8,7 @@ import (
 func TestJsonReader_InvalidJson(t *testing.T) {
 	// Prepare
 	raw := `"id": "b042ab5c-ca73-4460-b739-96410ea9d3a6" }`
-	obj := make(JsonObject)
+	obj := make(map[string]any)
 	re := NewJsonReader(strings.NewReader(raw))
 
 	// Process
@@ -29,7 +29,7 @@ func TestJsonReader_JsonObject(t *testing.T) {
 			"score": "-100",
 			"is active": "false"
 		}`
-	obj := make(JsonObject)
+	obj := make(map[string]any)
 	re := NewJsonReader(strings.NewReader(raw))
 
 	// Process
@@ -70,7 +70,7 @@ func TestJsonReader_JsonArray(t *testing.T) {
 			"is active": "true"
 		}
 	]`
-	arr := make(JsonArray, 0)
+	arr := make([]map[string]any, 0)
 	re := NewJsonReader(strings.NewReader(raw))
 
 	// Process
@@ -109,7 +109,7 @@ func TestJsonReader_JsonArray_NewlineDelimited(t *testing.T) {
 		{"id": "ce06f5b1-5721-42c0-91e1-9f72a09c250a","user": "Tuấn","score": "1.5","is active": "true"}
 		{"id": "b042ab5c-ca73-4460-b739-96410ea9d3a6","user": "Jon Doe","score": "-100","is active": "false"}
 		{"id": "4e01b638-44e5-4079-8043-baabbff21cc8","user": "高橋","score": "100000000000000000000000","is active": "true"}`
-	arr := make(JsonArray, 0)
+	arr := make([]map[string]any, 0)
 	re := NewJsonReader(strings.NewReader(raw))
 
 	// Process

@@ -1,4 +1,4 @@
-package cmd
+package cli
 
 import (
 	"bytes"
@@ -21,6 +21,7 @@ type mockLogger struct {
 	msg string
 }
 
+//nolint:revive // test helper returns concrete type for field access
 func NewMockLogger() *mockLogger {
 	return &mockLogger{}
 }
@@ -38,13 +39,14 @@ type mockRepository struct {
 	fileCreatingError error
 }
 
+//nolint:revive // test helper returns concrete type for field access
 func NewMockRepository() *mockRepository {
 	return &mockRepository{
 		isStdinEmpty: true,
 	}
 }
 
-func (r *mockRepository) GetFileReader(path string) (io.ReadCloser, error) {
+func (r *mockRepository) GetFileReader(_ string) (io.ReadCloser, error) {
 	if r.fileOpeningError != nil {
 		return nil, r.fileOpeningError
 	}
@@ -63,7 +65,7 @@ func (r *mockRepository) IsStdinEmpty() bool {
 	return r.isStdinEmpty
 }
 
-func (r *mockRepository) CreateFileWriter(path string) (io.WriteCloser, error) {
+func (r *mockRepository) CreateFileWriter(_ string) (io.WriteCloser, error) {
 	if r.fileCreatingError != nil {
 		return nil, r.fileCreatingError
 	}

@@ -4,22 +4,22 @@ import (
 	"testing"
 )
 
-func sampleJsonObject() JsonObject {
-	return JsonObject{
+func sampleObject() map[string]any {
+	return map[string]any{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
 		"score":     -100,
 		"is active": false,
-		"nested": JsonObject{
+		"nested": map[string]any{
 			"a": 1,
 			"b": 2,
-			"c": JsonObject{
-				"d": JsonObject{
+			"c": map[string]any{
+				"d": map[string]any{
 					"e": 3,
 				},
 			},
 			"f": []int{4, 5, 6},
-			"g": JsonObject{
+			"g": map[string]any{
 				"h": "A",
 				"i": true,
 				"j": 1,
@@ -32,13 +32,13 @@ func sampleJsonObject() JsonObject {
 
 func TestFlattenJsonObject_NilFlattenOption(t *testing.T) {
 	// Prepare
-	data := sampleJsonObject()
+	data := sampleObject()
 
 	// Process
-	FlattenJsonObject(data, nil)
+	Flatten(data, nil)
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"id":              "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":            "Jon Doe",
 		"score":           -100,
@@ -66,16 +66,16 @@ func TestFlattenJsonObject_NilFlattenOption(t *testing.T) {
 
 func TestFlattenJsonObject_UnlimitedLevel(t *testing.T) {
 	// Prepare
-	data := sampleJsonObject()
+	data := sampleObject()
 
 	// Process
-	FlattenJsonObject(data, &FlattenOption{
+	Flatten(data, &FlattenOption{
 		Level: FlattenLevelUnlimited,
 		Gap:   "__",
 	})
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"id":              "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":            "Jon Doe",
 		"score":           -100,
@@ -103,30 +103,30 @@ func TestFlattenJsonObject_UnlimitedLevel(t *testing.T) {
 
 func TestFlattenJsonObject_NonNestedLevel(t *testing.T) {
 	// Prepare
-	data := sampleJsonObject()
+	data := sampleObject()
 
 	// Process
-	FlattenJsonObject(data, &FlattenOption{
+	Flatten(data, &FlattenOption{
 		Level: FlattenLevelNonNested,
 		Gap:   "|",
 	})
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
 		"score":     -100,
 		"is active": false,
-		"nested": JsonObject{
+		"nested": map[string]any{
 			"a": 1,
 			"b": 2,
-			"c": JsonObject{
-				"d": JsonObject{
+			"c": map[string]any{
+				"d": map[string]any{
 					"e": 3,
 				},
 			},
 			"f": []int{4, 5, 6},
-			"g": JsonObject{
+			"g": map[string]any{
 				"h": "A",
 				"i": true,
 				"j": 1,
@@ -146,8 +146,8 @@ func TestFlattenJsonObject_NonNestedLevel(t *testing.T) {
 	}
 
 	// Check nested object.
-	nes := data["nested"].(JsonObject)
-	enes := expected["nested"].(JsonObject)
+	nes := data["nested"].(map[string]any)
+	enes := expected["nested"].(map[string]any)
 	if nes["a"] != enes["a"] {
 		t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key a", nes["a"], enes["a"])
 	}
@@ -155,10 +155,10 @@ func TestFlattenJsonObject_NonNestedLevel(t *testing.T) {
 		t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key b", nes["b"], enes["b"])
 	}
 
-	c := nes["c"].(JsonObject)
-	d := c["d"].(JsonObject)
-	ec := enes["c"].(JsonObject)
-	ed := ec["d"].(JsonObject)
+	c := nes["c"].(map[string]any)
+	d := c["d"].(map[string]any)
+	ec := enes["c"].(map[string]any)
+	ed := ec["d"].(map[string]any)
 	if d["e"] != ed["e"] {
 		t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key e", d["e"], ed["e"])
 	}
@@ -171,8 +171,8 @@ func TestFlattenJsonObject_NonNestedLevel(t *testing.T) {
 		}
 	}
 
-	g := nes["g"].(JsonObject)
-	eg := enes["g"].(JsonObject)
+	g := nes["g"].(map[string]any)
+	eg := enes["g"].(map[string]any)
 	for k, v := range eg {
 		if g[k] != v {
 			t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key %s", g[k], v, k)
@@ -182,29 +182,29 @@ func TestFlattenJsonObject_NonNestedLevel(t *testing.T) {
 
 func TestFlattenJsonObject_FirstLevel(t *testing.T) {
 	// Prepare
-	data := sampleJsonObject()
+	data := sampleObject()
 
 	// Process
-	FlattenJsonObject(data, &FlattenOption{
+	Flatten(data, &FlattenOption{
 		Level: 1,
 		Gap:   "|",
 	})
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
 		"score":     -100,
 		"is active": false,
 		"nested|a":  1,
 		"nested|b":  2,
-		"nested|c": JsonObject{
-			"d": JsonObject{
+		"nested|c": map[string]any{
+			"d": map[string]any{
 				"e": 3,
 			},
 		},
 		"nested|f": []int{4, 5, 6},
-		"nested|g": JsonObject{
+		"nested|g": map[string]any{
 			"h": "A",
 			"i": true,
 			"j": 1,
@@ -221,10 +221,10 @@ func TestFlattenJsonObject_FirstLevel(t *testing.T) {
 	}
 
 	// Check nested object.
-	c := data["nested|c"].(JsonObject)
-	d := c["d"].(JsonObject)
-	ec := expected["nested|c"].(JsonObject)
-	ed := ec["d"].(JsonObject)
+	c := data["nested|c"].(map[string]any)
+	d := c["d"].(map[string]any)
+	ec := expected["nested|c"].(map[string]any)
+	ed := ec["d"].(map[string]any)
 	if d["e"] != ed["e"] {
 		t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key e", d["e"], ed["e"])
 	}
@@ -237,8 +237,8 @@ func TestFlattenJsonObject_FirstLevel(t *testing.T) {
 		}
 	}
 
-	g := data["nested|g"].(JsonObject)
-	eg := expected["nested|g"].(JsonObject)
+	g := data["nested|g"].(map[string]any)
+	eg := expected["nested|g"].(map[string]any)
 	for k, v := range eg {
 		if g[k] != v {
 			t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key %s", g[k], v, k)
@@ -248,31 +248,31 @@ func TestFlattenJsonObject_FirstLevel(t *testing.T) {
 
 func TestFlattenJsonObject_Ignores_Map(t *testing.T) {
 	// Prepare
-	data := sampleJsonObject()
+	data := sampleObject()
 
 	// Process
-	FlattenJsonObject(data, &FlattenOption{
+	Flatten(data, &FlattenOption{
 		Level:   FlattenLevelUnlimited,
 		Gap:     "|",
 		SkipMap: true,
 	})
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"id":        "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":      "Jon Doe",
 		"score":     -100,
 		"is active": false,
-		"nested": JsonObject{
+		"nested": map[string]any{
 			"a": 1,
 			"b": 2,
-			"c": JsonObject{
-				"d": JsonObject{
+			"c": map[string]any{
+				"d": map[string]any{
 					"e": 3,
 				},
 			},
 			"f": []int{4, 5, 6},
-			"g": JsonObject{
+			"g": map[string]any{
 				"h": "A",
 				"i": true,
 				"j": 1,
@@ -290,8 +290,8 @@ func TestFlattenJsonObject_Ignores_Map(t *testing.T) {
 	}
 
 	// Check nested object.
-	nes := data["nested"].(JsonObject)
-	enes := expected["nested"].(JsonObject)
+	nes := data["nested"].(map[string]any)
+	enes := expected["nested"].(map[string]any)
 	if nes["a"] != enes["a"] {
 		t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key a", nes["a"], enes["a"])
 	}
@@ -299,10 +299,10 @@ func TestFlattenJsonObject_Ignores_Map(t *testing.T) {
 		t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key b", nes["b"], enes["b"])
 	}
 
-	c := nes["c"].(JsonObject)
-	d := c["d"].(JsonObject)
-	ec := enes["c"].(JsonObject)
-	ed := ec["d"].(JsonObject)
+	c := nes["c"].(map[string]any)
+	d := c["d"].(map[string]any)
+	ec := enes["c"].(map[string]any)
+	ed := ec["d"].(map[string]any)
 	if d["e"] != ed["e"] {
 		t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key e", d["e"], ed["e"])
 	}
@@ -315,8 +315,8 @@ func TestFlattenJsonObject_Ignores_Map(t *testing.T) {
 		}
 	}
 
-	g := nes["g"].(JsonObject)
-	eg := enes["g"].(JsonObject)
+	g := nes["g"].(map[string]any)
+	eg := enes["g"].(map[string]any)
 	for k, v := range eg {
 		if g[k] != v {
 			t.Fatalf("flattened JSON object is incorrect, %v is not equal expected value %v for key %s", g[k], v, k)
@@ -326,17 +326,17 @@ func TestFlattenJsonObject_Ignores_Map(t *testing.T) {
 
 func TestFlattenJsonObject_Ignores_Array(t *testing.T) {
 	// Prepare
-	data := sampleJsonObject()
+	data := sampleObject()
 
 	// Process
-	FlattenJsonObject(data, &FlattenOption{
+	Flatten(data, &FlattenOption{
 		Level:     FlattenLevelUnlimited,
 		Gap:       "|",
 		SkipArray: true,
 	})
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"id":           "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":         "Jon Doe",
 		"score":        -100,
@@ -371,16 +371,16 @@ func TestFlattenJsonObject_Ignores_Array(t *testing.T) {
 
 func TestFlattenJsonObject_Gap(t *testing.T) {
 	// Prepare
-	data := sampleJsonObject()
+	data := sampleObject()
 
 	// Process
-	FlattenJsonObject(data, &FlattenOption{
+	Flatten(data, &FlattenOption{
 		Level: FlattenLevelUnlimited,
 		Gap:   "|",
 	})
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"id":           "b042ab5c-ca73-4460-b739-96410ea9d3a6",
 		"user":         "Jon Doe",
 		"score":        -100,
@@ -412,7 +412,7 @@ func TestFlattenJsonObject_Special(t *testing.T) {
 
 	// Prepare
 	spI := new(specialI)
-	data := JsonObject{
+	data := map[string]any{
 		"special1": "&",
 		"special2": "<",
 		"special3": ">",
@@ -421,13 +421,13 @@ func TestFlattenJsonObject_Special(t *testing.T) {
 		"special6": "\u003e",
 		"a":        1,
 		"b":        2,
-		"c": JsonObject{
-			"d": JsonObject{
+		"c": map[string]any{
+			"d": map[string]any{
 				"e": 3,
 			},
 		},
 		"f": []int{4, 5, 6},
-		"g": JsonObject{
+		"g": map[string]any{
 			"h": "A",
 			"i": true,
 			"j": 1,
@@ -437,7 +437,7 @@ func TestFlattenJsonObject_Special(t *testing.T) {
 			"n": specialS{},
 			"o": spI,
 		},
-		"nested": JsonObject{
+		"nested": map[string]any{
 			"special1": "&",
 			"special2": "<",
 			"special3": ">",
@@ -446,13 +446,13 @@ func TestFlattenJsonObject_Special(t *testing.T) {
 			"special6": "\u003e",
 			"a":        1,
 			"b":        2,
-			"c": JsonObject{
-				"d": JsonObject{
+			"c": map[string]any{
+				"d": map[string]any{
 					"e": 3,
 				},
 			},
 			"f": []int{4, 5, 6},
-			"g": JsonObject{
+			"g": map[string]any{
 				"h": "A",
 				"i": true,
 				"j": 1,
@@ -466,13 +466,13 @@ func TestFlattenJsonObject_Special(t *testing.T) {
 	}
 
 	// Process
-	FlattenJsonObject(data, &FlattenOption{
+	Flatten(data, &FlattenOption{
 		Level: FlattenLevelUnlimited,
 		Gap:   "|",
 	})
 
 	// Check
-	expected := JsonObject{
+	expected := map[string]any{
 		"special1":        "&",
 		"special2":        "<",
 		"special3":        ">",

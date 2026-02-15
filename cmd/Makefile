@@ -1,9 +1,9 @@
 .PHONY: all
-all: test
+all: build
 
 .PHONY: build
 build:
-	go build -o bin/jsonconv ./jsonconv/main.go
+	go build -ldflags="-X 'github.com/tuan78/jsonconv/cmd.version=$(shell git describe --tags --always --dirty)'" -o bin/jsonconv ./jsonconv/main.go
 
 .PHONY: test
 test:

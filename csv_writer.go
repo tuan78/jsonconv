@@ -7,15 +7,16 @@ import (
 
 // A CsvWriter writes records using CSV encoding.
 type CsvWriter struct {
+	writer io.Writer
+
 	// Field delimiter. Set to ',' (CsvComma) by default in NewCsvWriter
 	Delimiter rune
 
 	// True to use \r\n as the line terminator
 	UseCRLF bool
-
-	writer io.Writer
 }
 
+// CsvComma is the default field delimiter for CSV files.
 const CsvComma rune = ','
 
 // NewCsvWriter returns a new CsvWriter that writes to w.
@@ -27,7 +28,7 @@ func NewCsvWriter(w io.Writer) *CsvWriter {
 }
 
 // Write writes all CSV data to w.
-func (w *CsvWriter) Write(data CsvData) error {
+func (w *CsvWriter) Write(data [][]string) error {
 	writer := csv.NewWriter(w.writer)
 	writer.Comma = w.Delimiter
 	writer.UseCRLF = w.UseCRLF

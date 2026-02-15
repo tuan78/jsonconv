@@ -4,13 +4,13 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tuan78/jsonconv/cmd"
+	"github.com/tuan78/jsonconv/internal/cli"
 )
 
 var exitFn = os.Exit
 
 func main() {
-	if err := cmd.NewRootCmd().Execute(); err != nil {
+	if err := cli.NewRootCmd().Execute(); err != nil {
 		fmt.Fprintf(os.Stderr, "Command execution failed, err: %v\n", err)
 		exitFn(1)
 	}

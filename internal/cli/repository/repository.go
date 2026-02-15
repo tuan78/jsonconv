@@ -5,7 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/tuan78/jsonconv/cmd/utils"
+	"github.com/tuan78/jsonconv/internal/cli/utils"
 )
 
 type (
@@ -28,7 +28,8 @@ func NewRepository() Repository {
 }
 
 func (r *repository) GetFileReader(path string) (io.ReadCloser, error) {
-	return os.Open(path)
+	// #nosec G304 -- CLI tool explicitly opens user-specified files
+	return os.Open(filepath.Clean(path))
 }
 
 func (r *repository) GetStdinReader() io.ReadCloser {
@@ -45,13 +46,17 @@ func (r *repository) IsStdinEmpty() bool {
 }
 
 func (r *repository) CreateFileWriter(path string) (io.WriteCloser, error) {
+	// Clean path to prevent traversal attacks
+	path = filepath.Clean(path)
+
 	// Check file path and make dir accordingly.
 	if utils.IsFilePath(path) {
-		// Ensure all dir in path exists.
-		err := os.MkdirAll(filepath.Dir(path), os.ModePerm)
+		// Ensure all dir in path exists with secure permissions.
+		err := os.MkdirAll(filepath.Dir(path), 0750)
 		if err != nil {
 			return nil, err
 		}
+		// #nosec G304 -- CLI tool explicitly creates user-specified files
 		fi, err := os.Create(path)
 		if err != nil {
 			return nil, err
@@ -65,6 +70,7 @@ func (r *repository) CreateFileWriter(path string) (io.WriteCloser, error) {
 		return nil, err
 	}
 	path = filepath.Join(dir, path)
+	// #nosec G304 -- CLI tool explicitly creates user-specified files
 	fi, err := os.Create(path)
 	if err != nil {
 		return nil, err

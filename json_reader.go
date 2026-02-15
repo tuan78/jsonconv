@@ -21,7 +21,7 @@ func NewJsonReader(r io.ReadSeeker) *JsonReader {
 
 // Read reads the next JSON-encoded value from its
 // input and stores it in the value pointed to by v.
-func (r *JsonReader) Read(v interface{}) error {
+func (r *JsonReader) Read(v any) error {
 	decoder := json.NewDecoder(r.reader)
 	err := decoder.Decode(v)
 	if err != nil {
@@ -31,7 +31,9 @@ func (r *JsonReader) Read(v interface{}) error {
 
 		// The JSON data is a valid JSON array. However, we will try to decode it line by line.
 		// Reset reader and decoder.
-		r.reader.Seek(0, io.SeekStart)
+		if _, seekErr := r.reader.Seek(0, io.SeekStart); seekErr != nil {
+			return seekErr
+		}
 		decoder = json.NewDecoder(r.reader)
 
 		// Check if v is a pointer to a slice or an array. If not, return an error.

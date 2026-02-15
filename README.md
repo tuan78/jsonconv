@@ -32,16 +32,16 @@ import "github.com/tuan78/jsonconv"
 ## Flatten JSON Object
 
 ```go
-obj := jsonconv.JsonObject{ // equivalent to map[string]interface{}
+obj := map[string]any{ 
     "a": 1,
     "b": 2,
-    "c": jsonconv.JsonObject{
-        "d": jsonconv.JsonObject{
+    "c": map[string]any{
+        "d": map[string]any{
             "e": 3,
         },
     },
     "f": []int{4, 5, 6},
-    "g": jsonconv.JsonObject{
+    "g": map[string]any{
         "h": "A",
         "i": true,
         "j": 1,
@@ -49,13 +49,13 @@ obj := jsonconv.JsonObject{ // equivalent to map[string]interface{}
         "l": nil,
     },
 }
-jsonconv.FlattenJsonObject(obj, nil) // The 'obj' will be modified as result
+jsonconv.Flatten(obj, nil) // The 'obj' will be modified as result
 ```
 
 Result:
 
 ```go
-jsonconv.JsonObject{
+map[string]any{
     "a": 1,
     "b": 2,
     "c__d__e": 3,
@@ -73,16 +73,16 @@ jsonconv.JsonObject{
 To customize the flattened data, you can create `FlattenOption` and put it in 2nd parameter. For example:
 
 ```go
-obj := jsonconv.JsonObject{
+obj := map[string]any{
     "a": 1,
     "b": 2,
-    "c": jsonconv.JsonObject{
-        "d": jsonconv.JsonObject{
+    "c": map[string]any{
+        "d": map[string]any{
             "e": 3,
         },
     },
     "f": []int{4, 5, 6},
-    "g": jsonconv.JsonObject{
+    "g": map[string]any{
         "h": "A",
         "i": true,
         "j": 1,
@@ -96,16 +96,16 @@ opt := &jsonconv.FlattenOption{
     SkipArray: true, // Skip JSON array flattening
     SkipObject: false, // Skip JSON object flattening. For example, leave it as 'false'
 }
-jsonconv.FlattenJsonObject(obj, opt) // The 'obj' will be modified as result
+jsonconv.Flatten(obj, opt) // The 'obj' will be modified as result
 ```
 
 Result:
 
 ```go
-jsonconv.JsonObject{
+map[string]any{
     "a": 1,
     "b": 2,
-    "c|d": jsonconv.JsonObject{
+    "c|d": map[string]any{
       "e": 3,
     },
     "f": []int{4, 5, 6},
@@ -120,7 +120,7 @@ jsonconv.JsonObject{
 ## Convert JSON Object or JSON Array to CSV Data
 
 ```go
-arr := jsonconv.JsonArray{ // equivalent to []map[string]interface{}
+arr := []map[string]any{ 
     {
         "id": "b042ab5c-ca73-4460-b739-96410ea9d3a6",
         "user": "Jon Doe",
@@ -132,7 +132,7 @@ arr := jsonconv.JsonArray{ // equivalent to []map[string]interface{}
     	"user": "Tuấn",
     	"score": 1.5,
     	"is active": true,
-    	"nested": JsonObject{
+    	"nested": map[string]any{
     		"a": 1,
     		"b": 2,
     	},
@@ -150,7 +150,7 @@ result := jsonconv.ToCsv(arr, nil)
 Result:
 
 ```go
-jsonconv.CsvData{
+[][]string{
     {
         "id", "is active", "nested", "score", "user"
     },
@@ -171,7 +171,7 @@ From the result above, we can see that the header is sorted and JSON object is n
 So to customize the csv data, you can create `ToCsvOption` and put it in 2nd parameter. For example:
 
 ```go
-arr := jsonconv.JsonArray{ // equivalent to []map[string]interface{}
+arr := []map[string]any{ 
     {
         "id": "b042ab5c-ca73-4460-b739-96410ea9d3a6",
         "user": "Jon Doe",
@@ -183,7 +183,7 @@ arr := jsonconv.JsonArray{ // equivalent to []map[string]interface{}
     	"user": "Tuấn",
     	"score": 1.5,
     	"is active": true,
-    	"nested": JsonObject{
+    	"nested": map[string]any{
     		"a": 1,
     		"b": 2,
     	},
@@ -205,7 +205,7 @@ result := jsonconv.ToCsv(arr, opt)
 Result:
 
 ```go
-jsonconv.CsvData{
+[][]string{
     {
         "id", "user", "is active", "nested_a", "nested_b", "score"
     },
