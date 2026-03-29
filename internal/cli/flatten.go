@@ -7,9 +7,9 @@ import (
 	"strings"
 
 	"github.com/spf13/cobra"
-	"github.com/tuan78/jsonconv"
-	"github.com/tuan78/jsonconv/internal/cli/logger"
-	"github.com/tuan78/jsonconv/internal/cli/repository"
+	"github.com/tuan78/jsonconv/v2"
+	"github.com/tuan78/jsonconv/v2/internal/cli/logger"
+	"github.com/tuan78/jsonconv/v2/internal/cli/repository"
 )
 
 func NewFlattenCmd() *cobra.Command {

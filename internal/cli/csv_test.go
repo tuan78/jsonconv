@@ -5,7 +5,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/tuan78/jsonconv"
+	"github.com/tuan78/jsonconv/v2"
 )
 
 func TestProcessCsvCmd_NoInputData(t *testing.T) {

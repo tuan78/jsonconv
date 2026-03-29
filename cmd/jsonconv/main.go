@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/tuan78/jsonconv/internal/cli"
+	"github.com/tuan78/jsonconv/v2/internal/cli"
 )
 
 var exitFn = os.Exit

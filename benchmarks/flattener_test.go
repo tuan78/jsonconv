@@ -3,7 +3,7 @@ package benchmarks
 import (
 	"testing"
 
-	"github.com/tuan78/jsonconv"
+	"github.com/tuan78/jsonconv/v2"
 )
 
 func BenchmarkFlatten(b *testing.B) {
