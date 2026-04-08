@@ -76,7 +76,7 @@ jobs:
           (cd cmd && make cover)
 
       - name: Upload lib coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{secrets.CODECOV_TOKEN}}
           files: ./cover.out
@@ -86,7 +86,7 @@ jobs:
           verbose: true
 
       - name: Upload cmd coverage to Codecov
-        uses: codecov/codecov-action@v4
+        uses: codecov/codecov-action@v5
         with:
           token: ${{secrets.CODECOV_TOKEN}}
           files: ./cmd/cover.out
